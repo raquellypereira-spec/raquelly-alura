@@ -1,0 +1,58 @@
+import { GoogleGenAI } from '@google/genai';
+import readline from 'readline';
+import 'dotenv/config'; // Carrega a sua chave de API de forma segura
+
+// Inicializa a IA usando a variável de ambiente salva no arquivo .env
+const ai = new GoogleGenAI(); 
+
+// Define as regras de comportamento do robô (System Prompt)
+const systemInstruction = `
+Você é um Mentor de Carreiras sênior, especializado em ajudar estudantes e 
+profissionais a identificarem suas habilidades, escolherem caminhos de carreira, 
+e se prepararem para o mercado de trabalho. Seja empático, prático e motivador. 
+Faça perguntas investigativas para entender o perfil do usuário se necessário, 
+e forneça conselhos estruturados em tópicos acionáveis.
+`;
+
+const chat = ai.chats.create({
+    model: 'gemini-2.5-flash',
+    config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.7,
+    }
+});
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+console.log("🤖 Mentor de Carreiras com IA iniciado com sucesso!");
+console.log("Digite 'sair' para encerrar a sessão.\n");
+
+function perguntar() {
+    rl.question('Você: ', async (inputUsuario) => {
+        if (inputUsuario.toLowerCase() === 'sair') {
+            console.log("\n🤖 Mentor: Muito sucesso na sua carreira! Até mais.");
+            rl.close();
+            return;
+        }
+
+        if (!inputUsuario.trim()) {
+            perguntar();
+            return;
+        }
+
+        try {
+            const resposta = await chat.sendMessage({ message: inputUsuario });
+            console.log(\n🤖 Mentor:\n${resposta.text}\n);
+            console.log("-".repeat(50));
+        } catch (erro) {
+            console.error("\n❌ Erro de comunicação com o Mentor:", erro.message);
+        }
+
+        perguntar();
+    });
+}
+
+perguntar();
